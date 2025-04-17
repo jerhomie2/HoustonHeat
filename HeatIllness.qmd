@@ -1,0 +1,49 @@
+---
+title: "Heat Related Illness Prevention"
+format: pdf
+editor: visual
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+library(sf)
+library(sfdep)
+library(spmodel)
+library(spdep)
+library(viridis)
+
+heat <- st_read('HoustonHeat/Data/HoustonHeat.shp')
+heat<- st_make_valid(heat)
+```
+
+## Add Relative Risk Variable
+
+```{r}
+heat <- heat %>%
+  mutate(Count = if_else(Count == 0, 0.0001, Count),
+         Population = if_else(Population == 0, 0.0001, Population),
+         log_RR = log(Count/Population), # log relative risk
+         EV = Population*(sum(Count)/sum(Population))) # Expected Value
+```
+
+## Model
+
+```{r}
+heat.lm <- lm(log_RR~NOAC+MED_AGE+HispanicPC+BlackPCT+under5PCT+over65PCT+povertyPCT+alonePCT+MinTemp, data=heat)
+
+# spatial auto regressinve model
+heat.spautor <- spautor(log_RR~NOAC+MED_AGE+HispanicPC+BlackPCT+under5PCT+over65PCT+povertyPCT+alonePCT+MinTemp, data=heat, spcov_type="car")
+
+# predict
+heat$fitted <- fitted(heat.spautor, newdata=heat)
+
+summary(heat.spautor)
+```
+
+## Plot
+
+```{r}
+ggplot(heat, aes(fill=fitted)) +
+  geom_sf() +
+  scale_fill_viridis()
+```
