@@ -19,12 +19,6 @@ heat<- st_make_valid(heat)
 ## Add Relative Risk Variable
 
 ```{r}
-# heat <- heat %>%
-#   mutate(Count = if_else(Count == 0, 0.0001, Count),
-#          Population = if_else(Population == 0, 0.0001, Population),
-#          log_RR = log(Count/Population), # log relative risk
-#          EV = Population*(sum(Count)/sum(Population))) # Expected Value
-
 heat <- heat %>%
   mutate(Count = if_else(Count == 0, 0.0001, Count),
          Population = if_else(Population == 0, 0.0001, Population),
